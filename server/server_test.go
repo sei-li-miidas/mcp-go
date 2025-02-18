@@ -570,14 +570,12 @@ func createTestServer() *MCPServer {
 			URI:  "resource://testresource",
 			Name: "My Resource",
 		},
-		func(ctx context.Context, request mcp.ReadResourceRequest) ([]interface{}, error) {
-			return []interface{}{
+		func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+			return []mcp.ResourceContents{
 				mcp.TextResourceContents{
-					ResourceContents: mcp.ResourceContents{
-						URI:      "resource://testresource",
-						MIMEType: "text/plain",
-					},
-					Text: "test content",
+					URI:      "resource://testresource",
+					MIMEType: "text/plain",
+					Text:     "test content",
 				},
 			}, nil
 		},
@@ -590,7 +588,7 @@ func createTestServer() *MCPServer {
 		},
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			return &mcp.CallToolResult{
-				Content: []interface{}{
+				Content: []mcp.Content{
 					mcp.TextContent{
 						Type: "text",
 						Text: "test result",

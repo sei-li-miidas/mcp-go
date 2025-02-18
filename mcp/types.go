@@ -23,17 +23,7 @@ type Cursor string
 
 type Request struct {
 	Method string `json:"method"`
-	Params struct {
-		Meta *struct {
-			// If specified, the caller is requesting out-of-band progress
-			// notifications for this request (as represented by
-			// notifications/progress). The value of this parameter is an
-			// opaque token that will be attached to any subsequent
-			// notifications. The receiver is not obligated to provide these
-			// notifications.
-			ProgressToken ProgressToken `json:"progressToken,omitempty"`
-		} `json:"_meta,omitempty"`
-	} `json:"params,omitempty"`
+	Params Params `json:"params,omitempty"`
 }
 
 type Params map[string]interface{}
@@ -372,7 +362,7 @@ type ReadResourceRequest struct {
 // from the client.
 type ReadResourceResult struct {
 	Result
-	Contents []interface{} `json:"contents"` // Can be TextResourceContents or BlobResourceContents
+	Contents []ResourceContents `json:"contents"` // Can be TextResourceContents or BlobResourceContents
 }
 
 // ResourceListChangedNotification is an optional notification from the server
@@ -458,25 +448,32 @@ type ResourceTemplate struct {
 
 // ResourceContents represents the contents of a specific resource or sub-
 // resource.
-type ResourceContents struct {
+type ResourceContents interface {
+	isResourceContents()
+}
+
+type TextResourceContents struct {
 	// The URI of this resource.
 	URI string `json:"uri"`
 	// The MIME type of this resource, if known.
 	MIMEType string `json:"mimeType,omitempty"`
-}
-
-type TextResourceContents struct {
-	ResourceContents
 	// The text of the item. This must only be set if the item can actually be
 	// represented as text (not binary data).
 	Text string `json:"text"`
 }
 
+func (TextResourceContents) isResourceContents() {}
+
 type BlobResourceContents struct {
-	ResourceContents
+	// The URI of this resource.
+	URI string `json:"uri"`
+	// The MIME type of this resource, if known.
+	MIMEType string `json:"mimeType,omitempty"`
 	// A base64-encoded string representing the binary data of the item.
 	Blob string `json:"blob"`
 }
+
+func (BlobResourceContents) isResourceContents() {}
 
 /* Logging */
 
@@ -584,6 +581,10 @@ type Annotated struct {
 	} `json:"annotations,omitempty"`
 }
 
+type Content interface {
+	isContent()
+}
+
 // TextContent represents text provided to or from an LLM.
 // It must have Type set to "text".
 type TextContent struct {
@@ -592,6 +593,8 @@ type TextContent struct {
 	// The text content of the message.
 	Text string `json:"text"`
 }
+
+func (TextContent) isContent() {}
 
 // ImageContent represents an image provided to or from an LLM.
 // It must have Type set to "image".
@@ -603,6 +606,20 @@ type ImageContent struct {
 	// The MIME type of the image. Different providers may support different image types.
 	MIMEType string `json:"mimeType"`
 }
+
+func (ImageContent) isContent() {}
+
+// EmbeddedResource represents the contents of a resource, embedded into a prompt or tool call result.
+//
+// It is up to the client how best to render embedded resources for the
+// benefit of the LLM and/or the user.
+type EmbeddedResource struct {
+	Annotated
+	Type     string           `json:"type"`
+	Resource ResourceContents `json:"resource"`
+}
+
+func (EmbeddedResource) isContent() {}
 
 // ModelPreferences represents the server's preferences for model selection,
 // requested of the client during sampling.

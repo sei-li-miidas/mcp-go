@@ -23,7 +23,17 @@ type Cursor string
 
 type Request struct {
 	Method string `json:"method"`
-	Params Params `json:"params,omitempty"`
+	Params struct {
+		Meta *struct {
+			// If specified, the caller is requesting out-of-band progress
+			// notifications for this request (as represented by
+			// notifications/progress). The value of this parameter is an
+			// opaque token that will be attached to any subsequent
+			// notifications. The receiver is not obligated to provide these
+			// notifications.
+			ProgressToken ProgressToken `json:"progressToken,omitempty"`
+		} `json:"_meta,omitempty"`
+	} `json:"params,omitempty"`
 }
 
 type Params map[string]interface{}

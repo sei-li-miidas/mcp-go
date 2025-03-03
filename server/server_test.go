@@ -3,10 +3,11 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMCPServer_NewMCPServer(t *testing.T) {
